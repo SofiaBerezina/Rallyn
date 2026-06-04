@@ -1,0 +1,7 @@
+.auth-page {
+  @apply min-h-screen flex flex-col items-center justify-center px-4;
+
+  &__logo {
+    @apply mx-auto mt-8 w-52 h-24 object-contain opacity-90;
+  }
+}

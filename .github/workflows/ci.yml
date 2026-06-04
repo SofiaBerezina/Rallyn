@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+        working-directory: ./activity-platform
+
+      - name: Lint
+        run: |
+          npm run lint -- --max-warnings=0 --ignore-pattern coverage
+        working-directory: ./activity-platform
+
+      - name: Format check
+        run: npm run format:check
+        working-directory: ./activity-platform
+
+  test:
+    name: Test (coverage)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+        working-directory: ./activity-platform
+
+      - name: Run tests (coverage)
+        run: npm run test:coverage
+        working-directory: ./activity-platform
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: activity-platform/coverage
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+        working-directory: ./activity-platform
+
+      - name: Build
+        run: npm run build
+        working-directory: ./activity-platform
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: activity-platform/dist
+
+  pages-deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Prepare public folder
+        run: |
+          mkdir -p public
+          if [ -d "activity-platform/dist" ]; then
+            cp -r activity-platform/dist/* public/
+          elif [ -d "dist" ]; then
+            cp -r dist/* public/
+          else
+            echo "Dist folder not found";
+            ls -la .;
+            exit 1;
+          fi
+          cp public/index.html public/404.html || true
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+
