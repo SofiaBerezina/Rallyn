@@ -1,0 +1,65 @@
+image: node:20
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - when: never
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+variables:
+  CI: "true"
+
+cache:
+  paths:
+    - activity-platform/node_modules/
+
+before_script:
+  - cd activity-platform
+  - npm ci
+
+lint:
+  stage: lint
+  script:
+    - npm run lint -- --max-warnings=0 --ignore-pattern coverage
+    - npm run format:check
+
+test:
+  stage: test
+  script:
+    - npm run test:coverage
+  artifacts:
+    when: always
+    paths:
+      - activity-platform/coverage/
+
+build:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - activity-platform/dist/
+
+pages:
+  stage: deploy
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - cd "$CI_PROJECT_DIR"
+    - mkdir -p public
+    - cp -r activity-platform/dist/* public/
+    - cp public/index.html public/404.html
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "project"'
