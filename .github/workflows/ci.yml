@@ -94,8 +94,6 @@ jobs:
     needs: build
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/project'
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
@@ -104,16 +102,13 @@ jobs:
       - name: Prepare public folder
         run: |
           mkdir -p public
-          if [ -d "activity-platform/dist" ]; then
-            cp -r activity-platform/dist/* public/
-          elif [ -d "dist" ]; then
-            cp -r dist/* public/
-          else
-            echo "Dist folder not found";
-            ls -la .;
-            exit 1;
+          cp -r ./* public/
+          rm -rf public/.git public/.github public/activity-platform 2>/dev/null || true
+          if [ -f public/index.html ]; then
+            cp public/index.html public/404.html
           fi
-          cp public/index.html public/404.html || true
+          echo "Public folder contents:"
+          ls -la public/
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
