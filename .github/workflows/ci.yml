@@ -101,13 +101,15 @@ jobs:
 
       - name: Prepare public folder
         run: |
-          mkdir -p public
-          cp -r ./* public/
-          rm -rf public/.git public/.github public/activity-platform 2>/dev/null || true
+          mkdir -p public_temp
+          for item in $(ls -A | grep -v '^public_temp$'); do
+            cp -r "$item" public_temp/
+          done
+          mv public_temp public
           if [ -f public/index.html ]; then
             cp public/index.html public/404.html
           fi
-          echo "Public folder contents:"
+          echo "✅ Public folder contents:"
           ls -la public/
 
       - name: Deploy to gh-pages
