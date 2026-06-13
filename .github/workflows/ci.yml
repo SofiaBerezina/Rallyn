@@ -4,6 +4,9 @@ on:
   push: {}
   pull_request: {}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   lint:
     name: Lint & Format
@@ -14,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install deps
         run: npm ci
@@ -39,7 +42,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install deps
         run: npm ci
@@ -50,7 +53,7 @@ jobs:
         working-directory: ./activity-platform
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: activity-platform/coverage
@@ -65,7 +68,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Determine repository name
         id: repo
@@ -80,7 +83,7 @@ jobs:
         working-directory: ./activity-platform
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: activity-platform/dist
@@ -94,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download dist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
 
@@ -113,7 +116,7 @@ jobs:
           cp public/index.html public/404.html || true
 
       - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: public
